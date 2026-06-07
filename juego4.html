@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Crucigrama – El Camino de los Ahorcados</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0c0a;
+  --surface:#1a1714;
+  --surface2:#221e1a;
+  --border:#3a3028;
+  --gold:#c9a84c;
+  --gold2:#e8c97a;
+  --text:#e8e0d0;
+  --muted:#8a7e6e;
+  --correct:#4a7c3f;
+  --wrong:#7c3f3f;
+  --active:#c9a84c;
+}
+body{
+  font-family:'Crimson Text',serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:16px;
+}
+h1{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.2rem,4vw,2rem);
+  color:var(--gold);
+  text-align:center;
+  letter-spacing:2px;
+  margin-bottom:4px;
+}
+.subtitle{
+  text-align:center;
+  color:var(--muted);
+  font-size:0.95rem;
+  font-style:italic;
+  margin-bottom:20px;
+}
+.sep{
+  width:80px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  margin:8px auto 20px;
+}
+
+/* STATS */
+.stats{
+  display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;
+}
+.stat{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 18px;
+  text-align:center;
+}
+.stat-val{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold);}
+.stat-lbl{font-size:0.75rem;color:var(--muted);letter-spacing:1px;}
+
+/* LAYOUT */
+.game-layout{
+  display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center;
+}
+
+/* GRID */
+.grid-wrap{overflow-x:auto;}
+.crossword-grid{
+  display:inline-grid;
+  border:1px solid var(--border);
+  border-radius:4px;
+  overflow:hidden;
+  box-shadow:0 0 30px rgba(201,168,76,0.08);
+}
+.cell{
+  width:36px;height:36px;
+  position:relative;
+  border:1px solid var(--border);
+}
+.cell.black{background:var(--bg);}
+.cell.white{background:var(--surface2);cursor:pointer;}
+.cell.white:hover{background:#2a2520;}
+.cell.active{background:#2e2818!important;outline:2px solid var(--gold);z-index:2;}
+.cell.highlighted{background:#241f14!important;}
+.cell.correct{background:#1a2e18!important;}
+.cell.wrong-anim{animation:flash-wrong 0.4s ease;}
+@keyframes flash-wrong{0%,100%{background:var(--surface2)}50%{background:#3a1a1a}}
+
+.cell-num{
+  position:absolute;top:2px;left:3px;
+  font-size:8px;color:var(--gold);
+  font-family:'Cinzel',serif;
+  line-height:1;pointer-events:none;
+}
+.cell-letter{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;
+  font-size:1.1rem;font-weight:700;
+  color:var(--text);
+  pointer-events:none;
+  text-transform:uppercase;
+}
+.cell.correct .cell-letter{color:#7ec87a;}
+
+/* PISTAS */
+.clues-panel{
+  min-width:220px;max-width:300px;flex:1;
+}
+.clues-section{margin-bottom:16px;}
+.clues-title{
+  font-family:'Cinzel',serif;
+  font-size:0.85rem;letter-spacing:2px;
+  color:var(--gold);
+  border-bottom:1px solid var(--border);
+  padding-bottom:6px;margin-bottom:10px;
+}
+.clue-item{
+  display:flex;gap:8px;
+  padding:6px 8px;border-radius:6px;
+  cursor:pointer;margin-bottom:4px;
+  transition:background 0.2s;
+  font-size:0.9rem;line-height:1.4;
+}
+.clue-item:hover{background:var(--surface2);}
+.clue-item.active-clue{background:#2e2818;border-left:2px solid var(--gold);}
+.clue-item.done-clue{opacity:0.5;}
+.clue-num{
+  font-family:'Cinzel',serif;
+  font-size:0.8rem;color:var(--gold);
+  min-width:22px;font-weight:700;
+}
+.clue-text{color:var(--text);font-style:italic;}
+
+/* INPUT oculto */
+#hidden-input{
+  position:fixed;opacity:0;pointer-events:none;width:1px;height:1px;
+}
+
+/* MENSAJE */
+.msg-bar{
+  text-align:center;min-height:24px;
+  font-style:italic;color:var(--gold2);
+  font-size:0.95rem;margin-bottom:12px;
+}
+
+/* BOTONES */
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
+.btn{
+  font-family:'Cinzel',serif;font-size:0.82rem;
+  letter-spacing:1px;padding:9px 22px;
+  border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--text);cursor:pointer;
+  transition:all 0.2s;
+}
+.btn:hover{background:var(--surface2);border-color:var(--gold);color:var(--gold);}
+.btn-gold{background:var(--gold);color:#0e0c0a;border-color:var(--gold);font-weight:700;}
+.btn-gold:hover{background:var(--gold2);color:#0e0c0a;}
+
+/* WIN */
+.win-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.85);
+  align-items:center;justify-content:center;z-index:100;
+}
+.win-overlay.show{display:flex;}
+.win-box{
+  background:var(--surface);border:1px solid var(--gold);
+  border-radius:12px;padding:36px 32px;
+  text-align:center;max-width:380px;width:90%;
+  box-shadow:0 0 40px rgba(201,168,76,0.2);
+}
+.win-icon{font-size:3rem;margin-bottom:12px;}
+.win-title{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold);margin-bottom:8px;}
+.win-stats{color:var(--muted);font-size:0.95rem;margin-bottom:20px;font-style:italic;}
+.win-quote{
+  background:var(--surface2);border-left:3px solid var(--gold);
+  padding:12px 16px;border-radius:0 8px 8px 0;
+  font-style:italic;font-size:0.9rem;color:var(--text);
+  text-align:left;margin-bottom:20px;line-height:1.6;
+}
+
+@media(max-width:600px){
+  .cell{width:30px;height:30px;}
+  .cell-letter{font-size:0.9rem;}
+  .game-layout{flex-direction:column;align-items:center;}
+  .clues-panel{max-width:100%;min-width:0;width:100%;}
+}
+</style>
+</head>
+<body>
+
+<h1>El Camino de los Ahorcados</h1>
+<p class="subtitle">Crucigrama interactivo — Leyenda de Loja</p>
+<div class="sep"></div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-val" id="s-words">0/10</div><div class="stat-lbl">PALABRAS</div></div>
+  <div class="stat"><div class="stat-val" id="s-moves">0</div><div class="stat-lbl">LETRAS</div></div>
+  <div class="stat"><div class="stat-val" id="s-time">0:00</div><div class="stat-lbl">TIEMPO</div></div>
+</div>
+
+<div class="msg-bar" id="msg">Haz clic en una celda para comenzar</div>
+
+<div class="game-layout">
+  <div class="grid-wrap">
+    <div class="crossword-grid" id="grid"></div>
+  </div>
+  <div class="clues-panel">
+    <div class="clues-section">
+      <div class="clues-title">HORIZONTALES</div>
+      <div id="clues-h"></div>
+    </div>
+    <div class="clues-section">
+      <div class="clues-title">VERTICALES</div>
+      <div id="clues-v"></div>
+    </div>
+  </div>
+</div>
+
+<div class="btns">
+  <button class="btn" onclick="checkAll()">Verificar</button>
+  <button class="btn" onclick="revealCurrent()">Revelar letra</button>
+  <button class="btn btn-gold" onclick="resetGame()">Nueva partida</button>
+</div>
+
+<div class="win-overlay" id="win-overlay">
+  <div class="win-box">
+    <div class="win-icon">⚰️</div>
+    <div class="win-title">¡Crucigrama Completo!</div>
+    <div class="win-stats" id="win-stats"></div>
+    <div class="win-quote">"Y así, el recuerdo de Ana María y Luis Felipe perdura más allá de la muerte, encadenado al viento y a la roca como un susurro triste y eterno."</div>
+    <button class="btn btn-gold" onclick="resetGame()">Jugar de nuevo</button>
+  </div>
+</div>
+
+<input id="hidden-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false"/>
+
+<script>
+/*
+  CRUCIGRAMA — El Camino de los Ahorcados
+  Grilla: 13 columnas x 13 filas (índice 0–12)
+  Palabras definidas con su posición inicial (fila, col), dirección y pista.
+*/
+
+const WORDS = [
+  // HORIZONTALES
+  { id:1,  dir:'H', row:0,  col:0,  word:'LEPRA',     clue:'Enfermedad que condenaba a los enfermos al aislamiento' },
+  { id:2,  dir:'H', row:2,  col:1,  word:'AISLADO',   clue:'Nombre del pabellón del hospital donde confinaban a los enfermos' },
+  { id:3,  dir:'H', row:4,  col:0,  word:'ANAMARÍA',  clue:'Protagonista de la historia, hija de Luz Marina' },
+  { id:4,  dir:'H', row:6,  col:2,  word:'CABUYA',    clue:'Material con el que Ana María tejió la soga' },
+  { id:5,  dir:'H', row:8,  col:1,  word:'GUABO',     clue:'Árbol del que se colgó Ana María' },
+  { id:6,  dir:'H', row:10, col:0,  word:'LOJANO',    clue:'Gentilicio de la ciudad donde ocurre la leyenda' },
+  { id:7,  dir:'H', row:12, col:3,  word:'COLINA',    clue:'Lugar elevado donde estaba el sendero maldito' },
+  // VERTICALES
+  { id:8,  dir:'V', row:0,  col:4,  word:'LUISFELIPE', clue:'Estudiante de derecho enamorado de Ana María' },
+  { id:9,  dir:'V', row:0,  col:7,  word:'LUZMARINА',  clue:'Madre de Ana María, enfermera del hospital' },
+  { id:10, dir:'V', row:1,  col:10, word:'TIFOIDEA',  clue:'Enfermedad que mató a la madre de Ana María' },
+];
+
+// Normalizar: quitar tildes/espacios para la grilla
+function norm(s){ return s.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s/g,''); }
+
+// Construir grilla vacía
+const ROWS=13, COLS=13;
+let grid=[], userGrid=[], selected=null, selDir='H', seconds=0, moves=0, timerInt=null;
+
+function buildGrid(){
+  grid=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+  userGrid=Array.from({length:ROWS},()=>Array(COLS).fill(''));
+  WORDS.forEach(w=>{
+    const wn=norm(w.word);
+    for(let i=0;i<wn.length;i++){
+      const r=w.dir==='H'?w.row:w.row+i;
+      const c=w.dir==='H'?w.col+i:w.col;
+      if(!grid[r][c]) grid[r][c]={letter:wn[i],num:null,words:[]};
+      grid[r][c].words.push({id:w.id,dir:w.dir});
+    }
+  });
+  // Asignar números
+  WORDS.forEach(w=>{
+    const r=w.row, c=w.col;
+    if(grid[r][c]) grid[r][c].num=w.id;
+  });
+}
+
+function renderGrid(){
+  const el=document.getElementById('grid');
+  el.style.gridTemplateColumns=`repeat(${COLS},auto)`;
+  el.innerHTML='';
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const div=document.createElement('div');
+      if(!grid[r][c]){
+        div.className='cell black';
+      } else {
+        div.className='cell white';
+        div.dataset.r=r; div.dataset.c=c;
+        if(grid[r][c].num){
+          const num=document.createElement('div');
+          num.className='cell-num';num.textContent=grid[r][c].num;
+          div.appendChild(num);
+        }
+        const lt=document.createElement('div');
+        lt.className='cell-letter';lt.id=`cl-${r}-${c}`;
+        div.appendChild(lt);
+        div.addEventListener('click',()=>onCellClick(r,c));
+      }
+      el.appendChild(div);
+    }
+  }
+}
+
+function renderClues(){
+  const hEl=document.getElementById('clues-h');
+  const vEl=document.getElementById('clues-v');
+  hEl.innerHTML=''; vEl.innerHTML='';
+  WORDS.forEach(w=>{
+    const div=document.createElement('div');
+    div.className='clue-item';div.id=`clue-${w.id}`;
+    div.innerHTML=`<span class="clue-num">${w.id}</span><span class="clue-text">${w.clue}</span>`;
+    div.addEventListener('click',()=>jumpToWord(w));
+    (w.dir==='H'?hEl:vEl).appendChild(div);
+  });
+}
+
+function getCellDiv(r,c){return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);}
+
+function highlight(wordId){
+  document.querySelectorAll('.cell.white').forEach(d=>d.classList.remove('highlighted','active'));
+  document.querySelectorAll('.clue-item').forEach(d=>d.classList.remove('active-clue'));
+  if(!wordId) return;
+  const w=WORDS.find(x=>x.id===wordId); if(!w) return;
+  const wn=norm(w.word);
+  for(let i=0;i<wn.length;i++){
+    const r=w.dir==='H'?w.row:w.row+i;
+    const c=w.dir==='H'?w.col+i:w.col;
+    const d=getCellDiv(r,c); if(d) d.classList.add('highlighted');
+  }
+  if(selected){
+    const d=getCellDiv(selected[0],selected[1]);
+    if(d){d.classList.remove('highlighted');d.classList.add('active');}
+  }
+  const cEl=document.getElementById(`clue-${wordId}`);
+  if(cEl){cEl.classList.add('active-clue');cEl.scrollIntoView({block:'nearest'});}
+}
+
+function getWordsAt(r,c){return grid[r]?.[c]?.words||[];}
+function getWordByDirAt(r,c,dir){return getWordsAt(r,c).find(w=>w.dir===dir);}
+
+let activeWordId=null;
+function onCellClick(r,c){
+  document.getElementById('hidden-input').focus();
+  if(selected&&selected[0]===r&&selected[1]===c){
+    // toggle direction
+    const other=selDir==='H'?'V':'H';
+    if(getWordByDirAt(r,c,other)) selDir=other;
+  } else {
+    selected=[r,c];
+    const ws=getWordsAt(r,c);
+    if(ws.length===1) selDir=ws[0].dir;
+    else if(!getWordByDirAt(r,c,selDir)) selDir=ws[0]?.dir||'H';
+  }
+  selected=[r,c];
+  const w=getWordByDirAt(r,c,selDir);
+  activeWordId=w?w.id:null;
+  highlight(activeWordId);
+}
+
+function jumpToWord(w){
+  selDir=w.dir; selected=[w.row,w.col]; activeWordId=w.id;
+  highlight(activeWordId);
+  document.getElementById('hidden-input').focus();
+}
+
+function advanceCursor(){
+  if(!selected||!activeWordId) return;
+  const w=WORDS.find(x=>x.id===activeWordId); if(!w) return;
+  const wn=norm(w.word);
+  let [r,c]=selected;
+  const nr=w.dir==='H'?r:r+1;
+  const nc=w.dir==='H'?c+1:c;
+  if(nr<ROWS&&nc<COLS&&grid[nr]?.[nc]){selected=[nr,nc];}
+  highlight(activeWordId);
+}
+
+function backCursor(){
+  if(!selected||!activeWordId) return;
+  const w=WORDS.find(x=>x.id===activeWordId); if(!w) return;
+  let [r,c]=selected;
+  const nr=w.dir==='H'?r:r-1;
+  const nc=w.dir==='H'?c-1:c;
+  if(nr>=0&&nc>=0&&grid[nr]?.[nc]){selected=[nr,nc];}
+  highlight(activeWordId);
+}
+
+document.getElementById('hidden-input').addEventListener('keydown',e=>{
+  if(!selected) return;
+  const [r,c]=selected;
+  if(e.key==='Backspace'){
+    e.preventDefault();
+    if(userGrid[r][c]){
+      userGrid[r][c]='';
+      updateCell(r,c);
+    } else { backCursor(); }
+    return;
+  }
+  if(e.key==='ArrowRight'){e.preventDefault();if(selDir==='H') advanceCursor();return;}
+  if(e.key==='ArrowLeft'){e.preventDefault();if(selDir==='H') backCursor();return;}
+  if(e.key==='ArrowDown'){e.preventDefault();if(selDir==='V') advanceCursor();return;}
+  if(e.key==='ArrowUp'){e.preventDefault();if(selDir==='V') backCursor();return;}
+  if(/^[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]$/.test(e.key)){
+    e.preventDefault();
+    const letter=norm(e.key);
+    userGrid[r][c]=letter;
+    moves++;
+    document.getElementById('s-moves').textContent=moves;
+    updateCell(r,c);
+    advanceCursor();
+    checkWordComplete();
+  }
+});
+
+function updateCell(r,c){
+  const el=document.getElementById(`cl-${r}-${c}`);
+  if(el) el.textContent=userGrid[r][c]||'';
+}
+
+function checkWordComplete(){
+  let done=0;
+  WORDS.forEach(w=>{
+    const wn=norm(w.word);
+    let complete=true;
+    for(let i=0;i<wn.length;i++){
+      const r=w.dir==='H'?w.row:w.row+i;
+      const c=w.dir==='H'?w.col+i:w.col;
+      if(userGrid[r][c]!==wn[i]){complete=false;break;}
+    }
+    if(complete){
+      done++;
+      document.getElementById(`clue-${w.id}`)?.classList.add('done-clue');
+      const wn2=norm(w.word);
+      for(let i=0;i<wn2.length;i++){
+        const r=w.dir==='H'?w.row:w.row+i;
+        const c=w.dir==='H'?w.col+i:w.col;
+        getCellDiv(r,c)?.classList.add('correct');
+        const lt=document.getElementById(`cl-${r}-${c}`);
+        if(lt) lt.parentElement?.classList.add('correct');
+      }
+    }
+  });
+  document.getElementById('s-words').textContent=`${done}/${WORDS.length}`;
+  if(done===WORDS.length) showWin();
+}
+
+function checkAll(){
+  let errors=0;
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      if(!grid[r][c]||!userGrid[r][c]) continue;
+      const correct=grid[r][c].letter===userGrid[r][c];
+      const d=getCellDiv(r,c);
+      if(!correct){errors++;d?.classList.add('wrong-anim');setTimeout(()=>d?.classList.remove('wrong-anim'),500);}
+    }
+  }
+  document.getElementById('msg').textContent=errors===0?'¡Todo correcto hasta ahora!':`${errors} letra(s) incorrecta(s) — ¡sigue intentando!`;
+  checkWordComplete();
+}
+
+function revealCurrent(){
+  if(!selected) return;
+  const [r,c]=selected;
+  if(!grid[r][c]) return;
+  userGrid[r][c]=grid[r][c].letter;
+  updateCell(r,c);
+  checkWordComplete();
+  advanceCursor();
+}
+
+function showWin(){
+  clearInterval(timerInt);
+  const m=Math.floor(seconds/60), s=seconds%60;
+  document.getElementById('win-stats').textContent=`Completado en ${m}:${String(s).padStart(2,'0')} con ${moves} letras ingresadas`;
+  document.getElementById('win-overlay').classList.add('show');
+}
+
+function resetGame(){
+  clearInterval(timerInt);
+  seconds=0; moves=0; selected=null; selDir='H'; activeWordId=null;
+  userGrid=Array.from({length:ROWS},()=>Array(COLS).fill(''));
+  document.getElementById('win-overlay').classList.remove('show');
+  document.getElementById('s-moves').textContent='0';
+  document.getElementById('s-words').textContent=`0/${WORDS.length}`;
+  document.getElementById('s-time').textContent='0:00';
+  document.getElementById('msg').textContent='Haz clic en una celda para comenzar';
+  renderGrid(); renderClues();
+  timerInt=setInterval(()=>{
+    seconds++;
+    const m=Math.floor(seconds/60),s=seconds%60;
+    document.getElementById('s-time').textContent=`${m}:${String(s).padStart(2,'0')}`;
+  },1000);
+}
+
+buildGrid(); renderGrid(); renderClues();
+timerInt=setInterval(()=>{
+  seconds++;
+  const m=Math.floor(seconds/60),s=seconds%60;
+  document.getElementById('s-time').textContent=`${m}:${String(s).padStart(2,'0')}`;
+},1000);
+</script>
+</body>
+</html>

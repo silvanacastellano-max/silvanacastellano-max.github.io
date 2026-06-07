@@ -1,0 +1,195 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
+  .mem-wrap { font-family: 'Crimson Text', serif; padding: 1rem 0; }
+
+  .mem-header { text-align: center; margin-bottom: 1.5rem; }
+  .mem-title { font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; color: var(--color-text-primary); margin: 0 0 4px; }
+  .mem-subtitle { font-size: 15px; color: var(--color-text-secondary); margin: 0; }
+
+  .mem-stats { display: flex; gap: 12px; justify-content: center; margin-bottom: 1.25rem; }
+  .mem-stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 20px; text-align: center; }
+  .mem-stat-val { font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700; color: var(--color-text-primary); }
+  .mem-stat-lbl { font-size: 12px; color: var(--color-text-secondary); }
+
+  .mem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 560px; margin: 0 auto 1.5rem; }
+
+  .mem-card { aspect-ratio: 3/4; cursor: pointer; perspective: 600px; border-radius: var(--border-radius-md); }
+  .mem-card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.45s cubic-bezier(.4,0,.2,1); }
+  .mem-card.flipped .mem-card-inner, .mem-card.matched .mem-card-inner { transform: rotateY(180deg); }
+
+  .mem-card-front, .mem-card-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; flex-direction: column; border: 1.5px solid; }
+
+  .mem-card-front { background: #1a3a1a; border-color: #3d7a3d; flex-direction: column; gap: 4px; }
+  .mem-card-front-pattern { font-size: 28px; opacity: 0.35; }
+  .mem-card-front-deco { width: 32px; height: 2px; background: #4a9a4a; opacity: 0.5; }
+
+  .mem-card-back { background: var(--color-background-primary); border-color: var(--color-border-tertiary); transform: rotateY(180deg); padding: 8px; gap: 4px; }
+  .mem-card-emoji { font-size: 30px; line-height: 1; }
+  .mem-card-label { font-size: 11px; color: var(--color-text-secondary); text-align: center; font-family: 'Cinzel', serif; line-height: 1.2; }
+
+  .mem-card.matched .mem-card-back { background: #eaf3de; border-color: #639922; }
+  .mem-card.matched .mem-card-label { color: #3B6D11; }
+
+  .mem-card.wrong .mem-card-inner { animation: shake 0.4s ease; }
+  @keyframes shake { 0%,100%{transform:rotateY(180deg)} 25%{transform:rotateY(180deg) translateX(-4px)} 75%{transform:rotateY(180deg) translateX(4px)} }
+
+  .mem-card.matched { cursor: default; }
+
+  .mem-btn { display: block; margin: 0 auto; font-family: 'Cinzel', serif; font-size: 14px; padding: 10px 28px; border-radius: var(--border-radius-md); border: 1.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-primary); cursor: pointer; transition: background 0.2s; }
+  .mem-btn:hover { background: var(--color-background-secondary); }
+
+  .mem-win { display: none; text-align: center; padding: 2rem 1rem; }
+  .mem-win-emoji { font-size: 48px; margin-bottom: 8px; }
+  .mem-win-title { font-family: 'Cinzel', serif; font-size: 20px; color: var(--color-text-primary); margin: 0 0 6px; }
+  .mem-win-sub { font-size: 15px; color: var(--color-text-secondary); margin: 0 0 1.5rem; }
+  .mem-moraleja { background: #eaf3de; border-left: 3px solid #639922; border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; padding: 12px 16px; margin: 0 auto 1.5rem; max-width: 420px; text-align: left; }
+  .mem-moraleja-lbl { font-family: 'Cinzel', serif; font-size: 11px; color: #3B6D11; margin-bottom: 4px; }
+  .mem-moraleja-txt { font-size: 14px; color: var(--color-text-primary); font-style: italic; line-height: 1.6; margin: 0; }
+
+  .mem-msg { text-align: center; min-height: 22px; font-size: 14px; color: var(--color-text-secondary); margin-bottom: 0.75rem; font-style: italic; }
+</style>
+
+<div class="mem-wrap">
+  <h2 class="sr-only">Juego de memoria: El Niño Misterioso</h2>
+
+  <div id="game-area">
+    <div class="mem-header">
+      <p class="mem-title">El Niño Misterioso</p>
+      <p class="mem-subtitle">Empareja cada elemento del cuento con su descripción</p>
+    </div>
+
+    <div class="mem-stats">
+      <div class="mem-stat"><div class="mem-stat-val" id="stat-moves">0</div><div class="mem-stat-lbl">Intentos</div></div>
+      <div class="mem-stat"><div class="mem-stat-val" id="stat-pairs">0/8</div><div class="mem-stat-lbl">Parejas</div></div>
+      <div class="mem-stat"><div class="mem-stat-val" id="stat-time">0s</div><div class="mem-stat-lbl">Tiempo</div></div>
+    </div>
+
+    <div class="mem-msg" id="msg">Encuentra las 8 parejas ocultas en el bosque</div>
+
+    <div class="mem-grid" id="grid"></div>
+
+    <button class="mem-btn" onclick="initGame()">Nueva partida</button>
+  </div>
+
+  <div class="mem-win" id="win-screen">
+    <div class="mem-win-emoji">🎉</div>
+    <p class="mem-win-title">¡Completaste el cuento!</p>
+    <p class="mem-win-sub" id="win-sub"></p>
+    <div class="mem-moraleja">
+      <div class="mem-moraleja-lbl">Moraleja del cuento</div>
+      <p class="mem-moraleja-txt">La naturaleza es hermosa y valiosa, pero también requiere de nuestra prudencia y respeto para mantener una armonía segura y saludable para todos.</p>
+    </div>
+    <button class="mem-btn" onclick="restartGame()">Jugar de nuevo</button>
+  </div>
+</div>
+
+<script>
+const PAIRS = [
+  { id:'a', emoji:'🏔️', label:'Montaña de\nSanta Rosa', desc:'Escenario\ndel cuento' },
+  { id:'b', emoji:'🪵', label:'Cabaña\nde madera', desc:'Hogar de\nla familia' },
+  { id:'c', emoji:'🌽', label:'Maíz, caña\ny chinas', desc:'Cultivos de\nla familia' },
+  { id:'d', emoji:'💧', label:'Río del\nbosque', desc:'Fuente de\nagua' },
+  { id:'e', emoji:'🧢', label:'Sombrero\nmisterioso', desc:'Prenda del\nduende' },
+  { id:'f', emoji:'🤢', label:'Vómito\ny fiebre', desc:'Enfermedad\n(malaire)' },
+  { id:'g', emoji:'🥚', label:'Huevo y\nhierbas', desc:'Cura con\nlimpia' },
+  { id:'h', emoji:'🌿', label:'Duende\ndel bosque', desc:'Guardián\nde lo oculto' },
+];
+
+let cards = [], flipped = [], matched = 0, moves = 0, locked = false, timer = null, seconds = 0;
+
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function initGame() {
+  clearInterval(timer);
+  flipped = []; matched = 0; moves = 0; locked = false; seconds = 0;
+  document.getElementById('stat-moves').textContent = '0';
+  document.getElementById('stat-pairs').textContent = '0/8';
+  document.getElementById('stat-time').textContent = '0s';
+  document.getElementById('msg').textContent = 'Encuentra las 8 parejas ocultas en el bosque';
+  document.getElementById('game-area').style.display = 'block';
+  document.getElementById('win-screen').style.display = 'none';
+
+  const deck = shuffle([
+    ...PAIRS.map(p => ({ ...p, side: 'A' })),
+    ...PAIRS.map(p => ({ ...p, side: 'B' }))
+  ]);
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  cards = [];
+
+  deck.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'mem-card';
+    card.dataset.id = item.id;
+    card.dataset.side = item.side;
+    card.innerHTML = `
+      <div class="mem-card-inner">
+        <div class="mem-card-front">
+          <div class="mem-card-front-pattern">🌲</div>
+          <div class="mem-card-front-deco"></div>
+        </div>
+        <div class="mem-card-back">
+          <div class="mem-card-emoji">${item.emoji}</div>
+          <div class="mem-card-label">${item.side === 'A' ? item.label : item.desc}</div>
+        </div>
+      </div>`;
+    card.addEventListener('click', () => onCardClick(card));
+    grid.appendChild(card);
+    cards.push(card);
+  });
+
+  timer = setInterval(() => {
+    seconds++;
+    document.getElementById('stat-time').textContent = seconds + 's';
+  }, 1000);
+}
+
+function onCardClick(card) {
+  if (locked || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  card.classList.add('flipped');
+  flipped.push(card);
+  if (flipped.length === 2) {
+    locked = true;
+    moves++;
+    document.getElementById('stat-moves').textContent = moves;
+    checkMatch();
+  }
+}
+
+function checkMatch() {
+  const [a, b] = flipped;
+  const same = a.dataset.id === b.dataset.id && a.dataset.side !== b.dataset.side;
+  if (same) {
+    a.classList.add('matched'); b.classList.add('matched');
+    matched++;
+    document.getElementById('stat-pairs').textContent = matched + '/8';
+    document.getElementById('msg').textContent = matched < 8 ? '¡Pareja encontrada! Sigue buscando...' : '';
+    flipped = []; locked = false;
+    if (matched === 8) setTimeout(showWin, 400);
+  } else {
+    a.classList.add('wrong'); b.classList.add('wrong');
+    document.getElementById('msg').textContent = 'No es pareja, intenta de nuevo...';
+    setTimeout(() => {
+      a.classList.remove('flipped','wrong');
+      b.classList.remove('flipped','wrong');
+      flipped = []; locked = false;
+    }, 1000);
+  }
+}
+
+function showWin() {
+  clearInterval(timer);
+  document.getElementById('game-area').style.display = 'none';
+  document.getElementById('win-screen').style.display = 'block';
+  document.getElementById('win-sub').textContent = `Lo lograste en ${moves} intentos y ${seconds} segundos`;
+}
+
+function restartGame() {
+  initGame();
+}
+
+initGame();
+</script>

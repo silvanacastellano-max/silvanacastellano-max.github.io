@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Escape Room – La Fiesta de la Chonta</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a1a0a;
+  --jungle:#0d2b0d;
+  --surface:#122212;
+  --card:#1a3a1a;
+  --border:#2d5a2d;
+  --gold:#d4a843;
+  --gold2:#f0c860;
+  --green:#4caf50;
+  --green2:#66bb6a;
+  --text:#e8f5e8;
+  --muted:#7a9e7a;
+  --red:#c0392b;
+  --amber:#e67e22;
+}
+body{
+  font-family:'Crimson Text',serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:0;
+  overflow-x:hidden;
+}
+
+/* FONDO SELVA */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(13,43,13,0.8) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(10,40,10,0.6) 0%, transparent 50%),
+    var(--bg);
+  pointer-events:none;z-index:0;
+}
+
+.wrap{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:16px;}
+
+/* HEADER */
+.game-header{text-align:center;padding:24px 0 16px;}
+.game-title{
+  font-family:'Cinzel Decorative',serif;
+  font-size:clamp(1.1rem,4vw,1.8rem);
+  color:var(--gold);
+  text-shadow:0 0 20px rgba(212,168,67,0.3);
+  margin-bottom:4px;
+  letter-spacing:1px;
+}
+.game-sub{font-size:0.95rem;color:var(--muted);font-style:italic;}
+.sep{width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:10px auto 16px;}
+
+/* HUD */
+.hud{
+  display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+  margin-bottom:18px;
+}
+.hud-item{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:6px 16px;
+  text-align:center;
+  min-width:80px;
+}
+.hud-val{font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold);}
+.hud-lbl{font-size:0.7rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+
+/* SALA */
+.room{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px;
+  margin-bottom:16px;
+  position:relative;
+  overflow:hidden;
+}
+.room::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+.room-num{
+  font-family:'Cinzel',serif;
+  font-size:0.7rem;letter-spacing:3px;
+  color:var(--muted);margin-bottom:6px;
+}
+.room-title{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1rem,3vw,1.4rem);
+  color:var(--gold2);
+  margin-bottom:10px;
+}
+.room-scene{
+  background:var(--jungle);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:16px;
+  margin-bottom:16px;
+  font-style:italic;
+  color:var(--text);
+  font-size:1rem;
+  line-height:1.7;
+}
+.room-scene .highlight{color:var(--gold2);font-weight:600;font-style:normal;}
+
+/* RETO */
+.challenge{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:16px;
+  margin-bottom:14px;
+}
+.challenge-q{
+  font-size:1rem;color:var(--text);
+  margin-bottom:12px;line-height:1.6;
+}
+.challenge-q strong{color:var(--gold);}
+
+/* OPCIONES */
+.options{display:flex;flex-direction:column;gap:8px;}
+.opt-btn{
+  background:var(--jungle);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 16px;
+  color:var(--text);
+  font-family:'Crimson Text',serif;
+  font-size:1rem;
+  cursor:pointer;
+  text-align:left;
+  transition:all 0.25s;
+  display:flex;align-items:center;gap:10px;
+}
+.opt-btn:hover{background:var(--card);border-color:var(--gold);color:var(--gold2);}
+.opt-btn.correct{background:#1a3a1a;border-color:var(--green);color:var(--green2);}
+.opt-btn.wrong{background:#2a0e0e;border-color:var(--red);color:#e57373;animation:shake 0.4s ease;}
+.opt-icon{font-size:1.2rem;min-width:24px;}
+
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* INPUT TEXTO */
+.input-group{display:flex;gap:8px;flex-wrap:wrap;}
+.code-input{
+  flex:1;min-width:140px;
+  background:var(--jungle);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px 14px;
+  color:var(--text);
+  font-family:'Cinzel',serif;
+  font-size:1rem;
+  letter-spacing:3px;
+  outline:none;
+}
+.code-input:focus{border-color:var(--gold);}
+.code-input::placeholder{color:var(--muted);letter-spacing:1px;font-size:0.85rem;}
+
+/* FEEDBACK */
+.feedback{
+  min-height:28px;
+  font-size:0.95rem;
+  font-style:italic;
+  text-align:center;
+  margin-top:8px;
+  transition:all 0.3s;
+}
+.feedback.ok{color:var(--green2);}
+.feedback.err{color:#e57373;}
+
+/* BOTONES */
+.btn{
+  font-family:'Cinzel',serif;
+  font-size:0.82rem;letter-spacing:1px;
+  padding:10px 24px;border-radius:8px;
+  border:1px solid var(--border);
+  background:transparent;color:var(--text);
+  cursor:pointer;transition:all 0.2s;
+}
+.btn:hover{background:var(--card);border-color:var(--gold);color:var(--gold);}
+.btn-gold{background:var(--gold);color:#0a1a0a;border-color:var(--gold);font-weight:700;}
+.btn-gold:hover{background:var(--gold2);color:#0a1a0a;}
+
+/* PISTA */
+.hint-box{
+  background:rgba(212,168,67,0.08);
+  border:1px dashed var(--gold);
+  border-radius:8px;padding:10px 14px;
+  font-size:0.9rem;color:var(--gold2);
+  font-style:italic;margin-top:10px;
+  display:none;
+}
+.hint-box.show{display:block;}
+
+/* PROGRESO */
+.progress-bar{
+  height:4px;background:var(--surface);
+  border-radius:4px;overflow:hidden;margin-bottom:16px;
+}
+.progress-fill{
+  height:100%;background:linear-gradient(90deg,var(--green),var(--gold));
+  border-radius:4px;transition:width 0.6s ease;
+}
+
+/* MENSAJE SALA */
+.room-msg{
+  text-align:center;padding:10px;
+  font-size:0.95rem;min-height:30px;
+}
+
+/* WIN */
+.win-screen{
+  display:none;text-align:center;
+  background:var(--card);
+  border:1px solid var(--gold);
+  border-radius:12px;padding:36px 24px;
+  position:relative;overflow:hidden;
+}
+.win-screen::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at center,rgba(212,168,67,0.06) 0%,transparent 70%);
+}
+.win-screen.show{display:block;}
+.win-title{
+  font-family:'Cinzel Decorative',serif;
+  font-size:clamp(1.2rem,4vw,2rem);
+  color:var(--gold);margin-bottom:8px;
+}
+.win-emoji{font-size:3rem;margin-bottom:12px;}
+.win-msg{font-size:1rem;color:var(--text);line-height:1.7;margin-bottom:20px;font-style:italic;}
+.win-stats{
+  display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;
+}
+.win-stat{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:8px 18px;text-align:center;
+}
+.win-stat-val{font-family:'Cinzel',serif;font-size:1.3rem;color:var(--gold);}
+.win-stat-lbl{font-size:0.72rem;color:var(--muted);}
+
+/* CLAVE visible */
+.key-badge{
+  display:inline-block;
+  background:var(--gold);color:#0a1a0a;
+  font-family:'Cinzel',serif;font-weight:700;
+  padding:3px 10px;border-radius:4px;
+  font-size:0.9rem;letter-spacing:2px;
+  margin:0 3px;
+}
+
+/* DRAG N DROP */
+.drag-zone{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.drag-item{
+  background:var(--jungle);border:1px solid var(--border);
+  border-radius:8px;padding:8px 14px;
+  font-size:0.9rem;color:var(--text);
+  cursor:grab;user-select:none;
+  transition:all 0.2s;
+}
+.drag-item:hover{border-color:var(--gold);color:var(--gold2);}
+.drag-item.dragging{opacity:0.4;}
+.drop-slots{display:flex;flex-direction:column;gap:6px;}
+.drop-slot{
+  background:var(--surface);border:2px dashed var(--border);
+  border-radius:8px;padding:10px 14px;
+  min-height:42px;font-size:0.9rem;color:var(--muted);
+  transition:all 0.2s;display:flex;align-items:center;gap:8px;
+}
+.drop-slot.over{border-color:var(--gold);background:rgba(212,168,67,0.08);}
+.drop-slot.filled{border-style:solid;border-color:var(--border);color:var(--text);}
+.slot-num{
+  font-family:'Cinzel',serif;font-size:0.75rem;
+  color:var(--gold);min-width:20px;
+}
+
+@media(max-width:480px){
+  .room{padding:16px;}
+  .hud-item{min-width:70px;padding:5px 10px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="game-header">
+    <div class="game-title">🌿 Escape de la Selva 🌿</div>
+    <div class="game-sub">La Fiesta de la Chonta — Pueblo Shuar</div>
+    <div class="sep"></div>
+  </div>
+
+  <div class="hud">
+    <div class="hud-item"><div class="hud-val" id="h-sala">1/5</div><div class="hud-lbl">Sala</div></div>
+    <div class="hud-item"><div class="hud-val" id="h-pts">0</div><div class="hud-lbl">Puntos</div></div>
+    <div class="hud-item"><div class="hud-val" id="h-time">0:00</div><div class="hud-lbl">Tiempo</div></div>
+    <div class="hud-item"><div class="hud-val" id="h-pistas">3</div><div class="hud-lbl">Pistas</div></div>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+  <!-- SALA 1 -->
+  <div class="room" id="room-1">
+    <div class="room-num">SALA 1 DE 5</div>
+    <div class="room-title">🌴 La Entrada a la Selva</div>
+    <div class="room-scene">
+      Llegas al corazón de la Amazonía ecuatoriana. Un anciano Shuar te bloquea el paso y dice:<br><br>
+      <em>"Solo quien conoce el nombre sagrado de nuestra fiesta en lengua Shuar podrá continuar. Esta celebración reafirma nuestra conexión con la selva, la naturaleza y lo espiritual. ¿Cómo la llamamos nosotros?"</em>
+    </div>
+    <div class="challenge">
+      <div class="challenge-q">¿Cuál es el nombre en lengua Shuar de la Fiesta de la Chonta?</div>
+      <div class="options" id="opts-1">
+        <button class="opt-btn" onclick="checkOpt(1,'A')"><span class="opt-icon">🎋</span>Ayahuasca</button>
+        <button class="opt-btn" onclick="checkOpt(1,'B')"><span class="opt-icon">🎋</span>Uyantsa</button>
+        <button class="opt-btn" onclick="checkOpt(1,'C')"><span class="opt-icon">🎋</span>Pachamama</button>
+        <button class="opt-btn" onclick="checkOpt(1,'D')"><span class="opt-icon">🎋</span>Uwishin</button>
+      </div>
+      <div class="feedback" id="fb-1"></div>
+      <div class="hint-box" id="hint-1">💡 Pista: Es el nombre que el PDF menciona entre paréntesis como equivalente de "la chonta" en la lengua nativa.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+      <button class="btn" onclick="useHint(1)">Ver pista 💡</button>
+    </div>
+  </div>
+
+  <!-- SALA 2 -->
+  <div class="room" id="room-2" style="display:none;">
+    <div class="room-num">SALA 2 DE 5</div>
+    <div class="room-title">🌺 El Calendario Sagrado</div>
+    <div class="room-scene">
+      Avanzas por un sendero de palmas. En la puerta hay una cerradura con forma de calendario.<br><br>
+      <em>"Para abrir esta puerta debes demostrar que conoces el tiempo sagrado. La chonta solo se celebra cuando el fruto está listo. ¿En qué meses ocurre el Uyantsa?"</em>
+    </div>
+    <div class="challenge">
+      <div class="challenge-q">¿En qué meses se lleva a cabo anualmente la Fiesta de la Chonta?</div>
+      <div class="options" id="opts-2">
+        <button class="opt-btn" onclick="checkOpt(2,'A')"><span class="opt-icon">📅</span>Enero y febrero</button>
+        <button class="opt-btn" onclick="checkOpt(2,'B')"><span class="opt-icon">📅</span>Junio y julio</button>
+        <button class="opt-btn" onclick="checkOpt(2,'C')"><span class="opt-icon">📅</span>Marzo y abril</button>
+        <button class="opt-btn" onclick="checkOpt(2,'D')"><span class="opt-icon">📅</span>Octubre y noviembre</button>
+      </div>
+      <div class="feedback" id="fb-2"></div>
+      <div class="hint-box" id="hint-2">💡 Pista: Coincide con la cosecha del fruto de la palma chonta (Bactris gasipaes).</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+      <button class="btn" onclick="useHint(2)">Ver pista 💡</button>
+    </div>
+  </div>
+
+  <!-- SALA 3 — DRAG & DROP -->
+  <div class="room" id="room-3" style="display:none;">
+    <div class="room-num">SALA 3 DE 5</div>
+    <div class="room-title">🍺 La Preparación Ritual</div>
+    <div class="room-scene">
+      Llegas a la choza ceremonial. Las mujeres Shuar preparan la bebida sagrada, pero los pasos están desordenados.<br><br>
+      <em>"El espíritu de la chonta no tolerará el desorden. Ordena los pasos correctamente para que la chicha sea aceptada por la Pachamama."</em>
+    </div>
+    <div class="challenge">
+      <div class="challenge-q">Arrastra los pasos de preparación de la <strong>chicha de chonta</strong> al orden correcto:</div>
+      <div class="drag-zone" id="drag-items">
+        <div class="drag-item" draggable="true" data-step="3" id="di-fermentar">🫙 Fermentar con agua</div>
+        <div class="drag-item" draggable="true" data-step="1" id="di-cocinar">🔥 Cocinar los frutos</div>
+        <div class="drag-item" draggable="true" data-step="4" id="di-servir">🥣 Servir en la fiesta</div>
+        <div class="drag-item" draggable="true" data-step="2" id="di-moler">🪨 Moler/machacar hasta pasta</div>
+      </div>
+      <div class="drop-slots" id="drop-slots">
+        <div class="drop-slot" data-pos="1"><span class="slot-num">1°</span><span class="slot-text">Arrastra aquí el primer paso...</span></div>
+        <div class="drop-slot" data-pos="2"><span class="slot-num">2°</span><span class="slot-text">Arrastra aquí el segundo paso...</span></div>
+        <div class="drop-slot" data-pos="3"><span class="slot-num">3°</span><span class="slot-text">Arrastra aquí el tercer paso...</span></div>
+        <div class="drop-slot" data-pos="4"><span class="slot-num">4°</span><span class="slot-text">Arrastra aquí el cuarto paso...</span></div>
+      </div>
+      <div class="feedback" id="fb-3"></div>
+      <div class="hint-box" id="hint-3">💡 Pista: Primero se cocinan, luego se pelan y muelen, después se fermenta con agua. La bebida se sirve al final.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      <button class="btn" onclick="useHint(3)">Ver pista 💡</button>
+      <button class="btn btn-gold" onclick="checkDrag()">Verificar orden</button>
+    </div>
+  </div>
+
+  <!-- SALA 4 -->
+  <div class="room" id="room-4" style="display:none;">
+    <div class="room-num">SALA 4 DE 5</div>
+    <div class="room-title">🪘 El Círculo de los Sabios</div>
+    <div class="room-scene">
+      Un anciano con pintura facial te detiene frente al círculo ritual. Los Uwishin danzan lentamente.<br><br>
+      <em>"Quien quiera presenciar nuestros rituales debe saber quiénes somos. Conoces nuestro nombre y nuestro rol en el Uyantsa. Solo así podrás avanzar."</em>
+    </div>
+    <div class="challenge">
+      <div class="challenge-q">¿Quiénes son los <strong>Uwishin</strong> y qué rol cumplen durante el Uyantsa?</div>
+      <div class="options" id="opts-4">
+        <button class="opt-btn" onclick="checkOpt(4,'A')"><span class="opt-icon">🧙</span>Los jóvenes guerreros que danzan toda la noche</button>
+        <button class="opt-btn" onclick="checkOpt(4,'B')"><span class="opt-icon">🧙</span>Las mujeres que preparan la chicha de chonta</button>
+        <button class="opt-btn" onclick="checkOpt(4,'C')"><span class="opt-icon">🧙</span>Los ancianos y sabios que dirigen oraciones y rituales de agradecimiento</button>
+        <button class="opt-btn" onclick="checkOpt(4,'D')"><span class="opt-icon">🧙</span>Los músicos que tocan los tambores y flautas</button>
+      </div>
+      <div class="feedback" id="fb-4"></div>
+      <div class="hint-box" id="hint-4">💡 Pista: Ellos elevan agradecimiento a la naturaleza y a los espíritus protectores de la selva.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+      <button class="btn" onclick="useHint(4)">Ver pista 💡</button>
+    </div>
+  </div>
+
+  <!-- SALA 5 — CÓDIGO FINAL -->
+  <div class="room" id="room-5" style="display:none;">
+    <div class="room-num">SALA 5 DE 5 — DESAFÍO FINAL</div>
+    <div class="room-title">🗝️ La Puerta de la Selva</div>
+    <div class="room-scene">
+      Frente a ti está la gran puerta de salida. Está sellada con un código de 4 letras.<br><br>
+      <em>"Has demostrado mucho conocimiento. Para el código final, recuerda: somos nativos del pueblo <span class='highlight'>Shuar</span>, nuestra fiesta honra la <span class='highlight'>Pachamama</span>, compartimos <span class='highlight'>chicha</span> y saberes, y vivimos en la <span class='highlight'>selva</span> amazónica.<br><br>
+      El código son las primeras letras de: el fruto sagrado, el pueblo que celebra, la bebida ceremonial, y la provincia donde están nuestras comunidades.<br><br>
+      Fruto = <strong>C</strong>honta &nbsp;|&nbsp; Pueblo = <strong>S</strong>huar &nbsp;|&nbsp; Bebida = <strong>C</strong>hicha &nbsp;|&nbsp; Provincia = <strong>Z</strong>amora Chinchipe"</em>
+    </div>
+    <div class="challenge">
+      <div class="challenge-q">Ingresa el código de 4 letras para escapar de la selva:</div>
+      <div class="input-group">
+        <input class="code-input" id="code-input" maxlength="4" placeholder="Ingresa el código..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+        <button class="btn btn-gold" onclick="checkCode()">Ingresar</button>
+      </div>
+      <div class="feedback" id="fb-5"></div>
+      <div class="hint-box" id="hint-5">💡 Pista: Son las iniciales de Chonta, Shuar, Chicha y Zamora. ¡Cuatro letras juntas!</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      <button class="btn" onclick="useHint(5)">Ver pista 💡</button>
+    </div>
+  </div>
+
+  <!-- WIN -->
+  <div class="win-screen" id="win-screen">
+    <div class="win-emoji">🏆</div>
+    <div class="win-title">¡Escapaste de la Selva!</div>
+    <div class="win-msg">
+      Has demostrado que conoces profundamente la tradición ancestral del pueblo Shuar.<br>
+      La Fiesta de la Chonta — el Uyantsa — es mucho más que una celebración: es la conexión viva entre el ser humano, la naturaleza y lo espiritual.
+    </div>
+    <div class="win-stats">
+      <div class="win-stat"><div class="win-stat-val" id="w-pts">0</div><div class="win-stat-lbl">Puntos</div></div>
+      <div class="win-stat"><div class="win-stat-val" id="w-time">-</div><div class="win-stat-lbl">Tiempo</div></div>
+      <div class="win-stat"><div class="win-stat-val" id="w-pistas">-</div><div class="win-stat-lbl">Pistas usadas</div></div>
+    </div>
+    <button class="btn btn-gold" onclick="resetGame()">Jugar de nuevo</button>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+// ESTADO
+let currentRoom=1, pts=0, seconds=0, hintsLeft=3, hintsUsed=0, timerInt=null;
+const TOTAL_ROOMS=5;
+const ANSWERS={1:'B',2:'C',4:'C'};
+const drag={slots:{},dragging:null};
+
+// TIMER
+function startTimer(){
+  timerInt=setInterval(()=>{
+    seconds++;
+    const m=Math.floor(seconds/60),s=seconds%60;
+    document.getElementById('h-time').textContent=`${m}:${String(s).padStart(2,'0')}`;
+  },1000);
+}
+
+// HUD
+function updateHUD(){
+  document.getElementById('h-sala').textContent=`${currentRoom}/${TOTAL_ROOMS}`;
+  document.getElementById('h-pts').textContent=pts;
+  document.getElementById('h-pistas').textContent=hintsLeft;
+  const pct=((currentRoom-1)/TOTAL_ROOMS)*100;
+  document.getElementById('progress').style.width=pct+'%';
+}
+
+// OPCIÓN MULTIPLE
+function checkOpt(room,opt){
+  if(document.getElementById(`fb-${room}`).classList.contains('ok')) return;
+  const correct=ANSWERS[room];
+  const btns=document.querySelectorAll(`#opts-${room} .opt-btn`);
+  const chosen=btns[['A','B','C','D'].indexOf(opt)];
+  if(opt===correct){
+    chosen.classList.add('correct');
+    showFB(room,'✅ ¡Correcto! La puerta se abre...','ok');
+    pts+=100;
+    updateHUD();
+    setTimeout(()=>nextRoom(),1200);
+  } else {
+    chosen.classList.add('wrong');
+    setTimeout(()=>chosen.classList.remove('wrong'),500);
+    showFB(room,'❌ Incorrecto. Sigue intentando...','err');
+    pts=Math.max(0,pts-10);
+    updateHUD();
+  }
+}
+
+function showFB(room,msg,cls){
+  const el=document.getElementById(`fb-${room}`);
+  el.textContent=msg;el.className='feedback '+cls;
+}
+
+// PISTAS
+function useHint(room){
+  if(hintsLeft<=0){showFB(room,'No te quedan pistas disponibles.','err');return;}
+  hintsLeft--;hintsUsed++;
+  document.getElementById(`hint-${room}`).classList.add('show');
+  updateHUD();
+}
+
+// DRAG & DROP SALA 3
+function initDrag(){
+  const items=document.querySelectorAll('.drag-item');
+  const slots=document.querySelectorAll('.drop-slot');
+  items.forEach(item=>{
+    item.addEventListener('dragstart',e=>{
+      drag.dragging=item;item.classList.add('dragging');
+      e.dataTransfer.setData('text/plain',item.id);
+    });
+    item.addEventListener('dragend',()=>{item.classList.remove('dragging');drag.dragging=null;});
+  });
+  slots.forEach(slot=>{
+    slot.addEventListener('dragover',e=>{e.preventDefault();slot.classList.add('over');});
+    slot.addEventListener('dragleave',()=>slot.classList.remove('over'));
+    slot.addEventListener('drop',e=>{
+      e.preventDefault();slot.classList.remove('over');
+      if(!drag.dragging) return;
+      const pos=slot.dataset.pos;
+      // Si el slot ya tiene algo, devolver al pool
+      if(drag.slots[pos]){
+        const old=document.getElementById(drag.slots[pos]);
+        if(old) document.getElementById('drag-items').appendChild(old);
+      }
+      drag.slots[pos]=drag.dragging.id;
+      slot.innerHTML=`<span class="slot-num">${pos}°</span><span>${drag.dragging.textContent}</span>`;
+      slot.classList.add('filled');
+      document.getElementById('drag-items').removeChild(drag.dragging);
+    });
+  });
+}
+
+function checkDrag(){
+  // Orden correcto: 1=cocinar, 2=moler, 3=fermentar, 4=servir
+  const correct={'1':'di-cocinar','2':'di-moler','3':'di-fermentar','4':'di-servir'};
+  let allFilled=Object.keys(drag.slots).length===4;
+  if(!allFilled){showFB(3,'Arrastra todos los pasos primero.','err');return;}
+  let ok=true;
+  for(const pos in correct){ if(drag.slots[pos]!==correct[pos]){ok=false;break;} }
+  if(ok){
+    showFB(3,'✅ ¡El orden es correcto! La chicha será aceptada...','ok');
+    pts+=100;updateHUD();
+    setTimeout(()=>nextRoom(),1400);
+  } else {
+    showFB(3,'❌ El orden no es correcto. Revisa los pasos del cuento.','err');
+    pts=Math.max(0,pts-15);updateHUD();
+  }
+}
+
+// CÓDIGO FINAL
+function checkCode(){
+  const val=document.getElementById('code-input').value.toUpperCase().trim();
+  if(val==='CSCZ'){
+    showFB(5,'✅ ¡Código correcto! ¡La puerta de la selva se abre!','ok');
+    pts+=200;updateHUD();
+    setTimeout(()=>showWin(),1200);
+  } else {
+    showFB(5,'❌ Código incorrecto. Piensa en las iniciales...','err');
+    pts=Math.max(0,pts-20);updateHUD();
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const inp=document.getElementById('code-input');
+  if(inp) inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkCode();});
+});
+
+// SIGUIENTE SALA
+function nextRoom(){
+  document.getElementById(`room-${currentRoom}`).style.display='none';
+  currentRoom++;
+  if(currentRoom<=TOTAL_ROOMS){
+    document.getElementById(`room-${currentRoom}`).style.display='block';
+    updateHUD();
+    if(currentRoom===3) setTimeout(initDrag,100);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+// WIN
+function showWin(){
+  clearInterval(timerInt);
+  document.getElementById(`room-${currentRoom}`).style.display='none';
+  const ws=document.getElementById('win-screen');
+  ws.classList.add('show');
+  const m=Math.floor(seconds/60),s=seconds%60;
+  document.getElementById('w-pts').textContent=pts;
+  document.getElementById('w-time').textContent=`${m}:${String(s).padStart(2,'0')}`;
+  document.getElementById('w-pistas').textContent=hintsUsed;
+  document.getElementById('progress').style.width='100%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// RESET
+function resetGame(){
+  currentRoom=1;pts=0;seconds=0;hintsLeft=3;hintsUsed=0;
+  clearInterval(timerInt);
+  Object.assign(drag,{slots:{},dragging:null});
+  document.getElementById('win-screen').classList.remove('show');
+  for(let i=1;i<=TOTAL_ROOMS;i++){
+    const r=document.getElementById(`room-${i}`);
+    if(r){r.style.display=i===1?'block':'none';}
+    const fb=document.getElementById(`fb-${i}`);
+    if(fb){fb.textContent='';fb.className='feedback';}
+    const hint=document.getElementById(`hint-${i}`);
+    if(hint) hint.classList.remove('show');
+  }
+  // Reset opciones
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('correct','wrong'));
+  // Reset drag
+  const di=document.getElementById('drag-items');
+  if(di) di.innerHTML=`
+    <div class="drag-item" draggable="true" data-step="3" id="di-fermentar">🫙 Fermentar con agua</div>
+    <div class="drag-item" draggable="true" data-step="1" id="di-cocinar">🔥 Cocinar los frutos</div>
+    <div class="drag-item" draggable="true" data-step="4" id="di-servir">🥣 Servir en la fiesta</div>
+    <div class="drag-item" draggable="true" data-step="2" id="di-moler">🪨 Moler/machacar hasta pasta</div>
+  `;
+  const ds=document.querySelectorAll('.drop-slot');
+  ds.forEach(s=>{
+    const pos=s.dataset.pos;
+    s.innerHTML=`<span class="slot-num">${pos}°</span><span class="slot-text">Arrastra aquí el ${pos==='1'?'primer':pos==='2'?'segundo':pos==='3'?'tercer':'cuarto'} paso...</span>`;
+    s.classList.remove('filled');
+  });
+  const ci=document.getElementById('code-input');
+  if(ci) ci.value='';
+  updateHUD();
+  startTimer();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// INIT
+updateHUD();
+startTimer();
+</script>
+</body>
+</html>

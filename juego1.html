@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Acertijos - El Niño Misterioso</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde: #2d8a4e;
+    --verde-claro: #4caf78;
+    --dorado: #e8890c;
+    --morado: #6b3fa0;
+    --negro: #1a1a2e;
+    --naranja: #ff6b35;
+    --azul: #2980b9;
+    --rojo: #c0392b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #0f1923 0%, #1a2a3a 60%, #0d2010 100%);
+    min-height: 100vh;
+    color: #fff;
+    padding: 16px;
+  }
+
+  .contenedor { max-width: 680px; margin: 0 auto; }
+
+  .titulo-juego {
+    text-align: center; margin-bottom: 20px;
+  }
+  .titulo-juego h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+    color: var(--dorado);
+    text-shadow: 0 0 20px rgba(232,137,12,0.5);
+    line-height: 1.2;
+  }
+  .titulo-juego p { color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-top:6px; }
+
+  /* PANEL MARCADOR */
+  .marcador {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .marcador-item {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50px;
+    padding: 7px 18px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.95rem;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .marcador-item span { color: var(--dorado); }
+
+  /* BARRA PROGRESO */
+  .progreso-wrap {
+    background: rgba(255,255,255,0.1);
+    border-radius: 50px; height: 8px;
+    margin-bottom: 18px; overflow: hidden;
+  }
+  .progreso-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--verde-claro), var(--dorado));
+    border-radius: 50px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  /* TARJETA ACERTIJO */
+  .tarjeta-acertijo {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 24px 22px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tarjeta-acertijo::before {
+    content: '';
+    position: absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, var(--verde-claro), var(--dorado), var(--morado));
+  }
+
+  .numero-pregunta {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .categoria-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .cat-personaje { background: rgba(107,63,160,0.4); color: #c39bd3; border: 1px solid rgba(107,63,160,0.5); }
+  .cat-lugar { background: rgba(45,138,78,0.4); color: #82e0aa; border: 1px solid rgba(45,138,78,0.5); }
+  .cat-accion { background: rgba(232,137,12,0.4); color: #fad7a0; border: 1px solid rgba(232,137,12,0.5); }
+  .cat-moraleja { background: rgba(41,128,185,0.4); color: #aed6f1; border: 1px solid rgba(41,128,185,0.5); }
+  .cat-naturaleza { background: rgba(76,175,120,0.3); color: #a9dfbf; border: 1px solid rgba(76,175,120,0.5); }
+
+  .ilustracion {
+    width: 100%;
+    border-radius: 12px;
+    margin: 12px 0;
+    display: block;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .texto-acertijo {
+    font-size: clamp(1rem, 3vw, 1.15rem);
+    line-height: 1.7;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .pista-texto {
+    font-size: 0.85rem;
+    color: rgba(255,220,100,0.8);
+    background: rgba(232,137,12,0.1);
+    border-left: 2px solid var(--dorado);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .pista-texto.visible { display: block; animation: slideDown 0.3s ease; }
+  @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+  /* OPCIONES */
+  .opciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  @media (max-width: 480px) { .opciones { grid-template-columns: 1fr; } }
+
+  .opcion-btn {
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    display: flex; align-items: center; gap: 10px;
+    line-height: 1.4;
+  }
+  .opcion-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.15);
+    border-color: var(--dorado);
+    transform: translateY(-2px);
+  }
+  .opcion-btn .letra {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    font-weight: 800;
+  }
+  .opcion-btn.correcta {
+    background: rgba(76,175,120,0.3);
+    border-color: var(--verde-claro);
+    animation: pulso 0.4s ease;
+  }
+  .opcion-btn.correcta .letra { background: var(--verde-claro); color: #fff; }
+  .opcion-btn.incorrecta {
+    background: rgba(192,57,43,0.3);
+    border-color: var(--rojo);
+  }
+  .opcion-btn.incorrecta .letra { background: var(--rojo); color: #fff; }
+  .opcion-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+  @keyframes pulso { 0%{transform:scale(1)} 50%{transform:scale(1.03)} 100%{transform:scale(1)} }
+
+  /* FEEDBACK */
+  .feedback {
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 12px;
+    display: none;
+    animation: aparecer 0.3s ease;
+  }
+  .feedback.show { display: block; }
+  @keyframes aparecer { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+  .feedback.bien { background: rgba(76,175,120,0.2); border: 1px solid rgba(76,175,120,0.4); }
+  .feedback.mal { background: rgba(192,57,43,0.2); border: 1px solid rgba(192,57,43,0.4); }
+  .feedback h4 { font-family: 'Fredoka One', cursive; font-size: 1.1rem; margin-bottom: 4px; }
+  .feedback.bien h4 { color: var(--verde-claro); }
+  .feedback.mal h4 { color: #e74c3c; }
+  .feedback p { font-size: 0.88rem; color: rgba(255,255,255,0.85); line-height: 1.5; }
+
+  /* BOTONES ACCIÓN */
+  .btns-accion {
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    margin-top: 14px;
+  }
+  .btn-accion {
+    padding: 11px 24px;
+    border-radius: 50px; border: none;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-accion:hover { transform: translateY(-2px); }
+  .btn-siguiente { background: var(--dorado); color: #fff; }
+  .btn-pista { background: var(--morado); color: #fff; }
+  .btn-menu { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+
+  /* PANTALLA INICIO */
+  .pantalla-inicio {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 30px 24px;
+    text-align: center;
+  }
+  .pantalla-inicio canvas { border-radius: 14px; margin: 16px auto; display: block; max-width: 100%; }
+  .pantalla-inicio h2 { font-family: 'Fredoka One', cursive; color: var(--verde-claro); font-size: 1.4rem; margin-bottom: 10px; }
+  .pantalla-inicio p { color: rgba(255,255,255,0.75); font-size: 0.95rem; line-height: 1.7; margin-bottom: 14px; }
+
+  /* PANTALLA FINAL */
+  .pantalla-final {
+    display: none;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 30px 24px;
+    text-align: center;
+  }
+  .pantalla-final.show { display: block; animation: aparecer 0.5s ease; }
+  .pantalla-final h2 { font-family: 'Fredoka One', cursive; color: var(--dorado); font-size: 1.8rem; margin-bottom: 12px; }
+  .estrellas-puntuacion { font-size: 2.5rem; margin: 10px 0; }
+  .resultado-final {
+    background: rgba(0,0,0,0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 14px 0;
+  }
+  .resultado-final .num { font-family: 'Fredoka One', cursive; font-size: 2.5rem; color: var(--dorado); }
+  .resultado-final p { color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+  .mensaje-final { font-size: 0.95rem; color: rgba(255,255,255,0.85); line-height: 1.7; margin: 14px 0; }
+  .aprendizajes {
+    background: rgba(232,137,12,0.1);
+    border: 1px solid rgba(232,137,12,0.3);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: left;
+    margin: 14px 0;
+  }
+  .aprendizajes h4 { color: var(--dorado); font-family: 'Fredoka One', cursive; margin-bottom: 10px; }
+  .aprendizajes li { font-size: 0.88rem; color: rgba(255,255,255,0.8); margin-bottom: 6px; list-style: none; padding-left: 4px; line-height: 1.5; }
+
+  .barra-nivel {
+    display: flex; align-items: center; gap: 8px; margin: 4px 0;
+  }
+  .barra-nivel-fill {
+    height: 6px; border-radius: 50px;
+    background: var(--verde-claro);
+    transition: width 1s ease;
+  }
+  .barra-nivel-bg { flex:1; height:6px; background:rgba(255,255,255,0.1); border-radius:50px; overflow:hidden; }
+</style>
+</head>
+<body>
+
+<div class="contenedor">
+  <div class="titulo-juego">
+    <h1>🔮 Acertijos del<br>Niño Misterioso</h1>
+    <p>¿Entendiste el cuento? ¡Demuéstralo!</p>
+  </div>
+
+  <!-- PANTALLA INICIO -->
+  <div class="pantalla-inicio" id="pantalla-inicio">
+    <h2>🌿 ¿Listo para el desafío?</h2>
+    <canvas id="canvas-portada" width="320" height="180"></canvas>
+    <p>Responde <strong>10 acertijos</strong> sobre el cuento del Niño Misterioso del bosque de Cotopaxi. 
+    Pon a prueba lo que aprendiste: personajes, lugares, acciones y la moraleja del cuento.</p>
+    <p style="color:rgba(255,220,100,0.8); font-size:0.88rem;">💡 Puedes pedir una pista si la necesitas, ¡pero cuesta puntos!</p>
+    <div class="btns-accion">
+      <button class="btn-accion btn-siguiente" onclick="iniciarJuego()">¡Empezar! 🎮</button>
+    </div>
+  </div>
+
+  <!-- JUEGO ACTIVO -->
+  <div id="juego-activo" style="display:none;">
+    <div class="marcador">
+      <div class="marcador-item">⭐ Puntos: <span id="puntos">0</span></div>
+      <div class="marcador-item">❓ Pregunta: <span id="num-pregunta">1</span>/10</div>
+      <div class="marcador-item">✅ Correctas: <span id="correctas">0</span></div>
+    </div>
+    <div class="progreso-wrap">
+      <div class="progreso-fill" id="progreso-fill"></div>
+    </div>
+    <div class="tarjeta-acertijo" id="tarjeta">
+      <div class="numero-pregunta" id="num-p"></div>
+      <span class="categoria-badge" id="cat-badge"></span>
+      <canvas class="ilustracion" id="canvas-pregunta" width="600" height="180"></canvas>
+      <p class="texto-acertijo" id="texto-p"></p>
+      <div class="pista-texto" id="pista-p"></div>
+      <div class="opciones" id="opciones"></div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <div class="btns-accion">
+      <button class="btn-accion btn-pista" id="btn-pista" onclick="mostrarPista()">💡 Pista (-5 pts)</button>
+      <button class="btn-accion btn-siguiente" id="btn-siguiente" onclick="siguientePregunta()" style="display:none;">Siguiente ➡️</button>
+      <button class="btn-accion btn-menu" onclick="volverMenu()">🏠 Menú</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA FINAL -->
+  <div class="pantalla-final" id="pantalla-final">
+    <div class="estrellas-puntuacion" id="estrellas-final"></div>
+    <h2 id="titulo-final"></h2>
+    <div class="resultado-final">
+      <div class="num" id="puntos-final"></div>
+      <p id="sub-resultado"></p>
+    </div>
+    <div class="barra-nivel">
+      <span style="font-size:0.8rem;color:rgba(255,255,255,0.5);min-width:80px;">Precisión</span>
+      <div class="barra-nivel-bg"><div class="barra-nivel-fill" id="barra-precision" style="width:0%"></div></div>
+      <span id="pct-precision" style="font-size:0.85rem;color:var(--verde-claro);min-width:36px;text-align:right;">0%</span>
+    </div>
+    <p class="mensaje-final" id="mensaje-final"></p>
+    <div class="aprendizajes">
+      <h4>📚 Lo que aprendiste hoy:</h4>
+      <ul id="lista-aprendizajes"></ul>
+    </div>
+    <div class="btns-accion">
+      <button class="btn-accion btn-siguiente" onclick="reiniciarJuego()">🔄 Jugar de nuevo</button>
+      <button class="btn-accion btn-menu" onclick="volverMenu()">🏠 Menú</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== FUNCIONES DE DIBUJO =====
+function dibujarEscena(ctx, tipo) {
+  const w = ctx.canvas.width, h = ctx.canvas.height;
+  const escenas = {
+    bosque: () => {
+      ctx.fillStyle='#0d2010'; ctx.fillRect(0,0,w,h);
+      const g=ctx.createLinearGradient(0,0,0,h*0.6);
+      g.addColorStop(0,'#1a3040'); g.addColorStop(1,'#0d2010');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+      // Árboles
+      function arbol(x,y,tam,c){
+        ctx.fillStyle=c;
+        ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-tam*0.4,y+tam); ctx.lineTo(x+tam*0.4,y+tam); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(x,y+tam*0.3); ctx.lineTo(x-tam*0.5,y+tam*1.1); ctx.lineTo(x+tam*0.5,y+tam*1.1); ctx.closePath(); ctx.fill();
+        ctx.fillStyle='#3d1a00'; ctx.fillRect(x-tam*0.1,y+tam*1.1,tam*0.2,tam*0.3);
+      }
+      [0.08,0.22,0.5,0.65,0.82,0.93].forEach((f,i)=>arbol(w*f,h*(0.1+i%3*0.05),h*0.25,i%2===0?'#1b4332':'#2d6a4f'));
+      // Luna
+      ctx.fillStyle='rgba(255,250,220,0.9)';
+      ctx.beginPath(); ctx.arc(w*0.85,h*0.15,h*0.1,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,255,220,0.2)';
+      ctx.beginPath(); ctx.arc(w*0.85,h*0.15,h*0.18,0,Math.PI*2); ctx.fill();
+      // Neblina
+      ctx.fillStyle='rgba(180,210,230,0.12)';
+      ctx.beginPath(); ctx.ellipse(w*0.5,h*0.6,w*0.7,h*0.15,0,0,Math.PI*2); ctx.fill();
+    },
+    nino: () => {
+      ctx.fillStyle='#1a2840'; ctx.fillRect(0,0,w,h);
+      // Lluvia
+      ctx.strokeStyle='rgba(150,200,255,0.35)'; ctx.lineWidth=1;
+      for(let i=0;i<30;i++){
+        let rx=Math.random()*w,ry=Math.random()*h;
+        ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx-4,ry+10); ctx.stroke();
+      }
+      // Niño
+      let cx=w*0.5, cy=h*0.35;
+      // Sombrero
+      ctx.fillStyle='#7D4015';
+      ctx.beginPath(); ctx.ellipse(cx,cy-h*0.14,w*0.12,h*0.04,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#5a2e0c';
+      ctx.fillRect(cx-w*0.07,cy-h*0.28,w*0.14,h*0.16);
+      // Cabeza
+      ctx.fillStyle='#FDBCB4'; ctx.beginPath(); ctx.arc(cx,cy,h*0.12,0,Math.PI*2); ctx.fill();
+      // Ojos
+      ctx.fillStyle='#222';
+      ctx.beginPath(); ctx.arc(cx-w*0.025,cy-h*0.01,3,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx+w*0.025,cy-h*0.01,3,0,Math.PI*2); ctx.fill();
+      // Sonrisa
+      ctx.strokeStyle='#555'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(cx,cy+h*0.03,w*0.03,0,Math.PI); ctx.stroke();
+      // Cuerpo
+      ctx.fillStyle='#4a7c59'; ctx.fillRect(cx-w*0.07,cy+h*0.12,w*0.14,h*0.35);
+      // Signo de interrogación
+      ctx.fillStyle='rgba(255,220,50,0.85)';
+      ctx.font=`bold ${h*0.3}px Fredoka One,sans-serif`;
+      ctx.fillText('?',w*0.12,h*0.55);
+    },
+    familia: () => {
+      ctx.fillStyle='#2a1a3a'; ctx.fillRect(0,0,w,h);
+      // Casa
+      ctx.fillStyle='#4a3520';
+      ctx.fillRect(w*0.55,h*0.15,w*0.4,h*0.75);
+      ctx.fillStyle='#8B4513';
+      ctx.beginPath(); ctx.moveTo(w*0.5,h*0.05); ctx.lineTo(w*0.75,h*0.15); ctx.lineTo(w,h*0.05); ctx.lineTo(w,h*0.15); ctx.lineTo(w*0.5,h*0.15); ctx.closePath(); ctx.fill();
+      // Ventana
+      ctx.fillStyle='rgba(255,200,100,0.5)'; ctx.fillRect(w*0.63,h*0.3,w*0.12,h*0.15); 
+      // Personas
+      function p(x,c,alto){
+        ctx.fillStyle='#FDBCB4'; ctx.beginPath(); ctx.arc(x,h*0.45,alto,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle=c; ctx.fillRect(x-w*0.04,h*0.45+alto,w*0.08,alto*2.5);
+      }
+      p(w*0.12,'#c0392b',h*0.11);
+      p(w*0.27,'#2980b9',h*0.13);
+      p(w*0.42,'#8B4513',h*0.09);
+      // Sombrero
+      ctx.fillStyle='#5a2e0c'; ctx.fillRect(w*0.36,h*0.29,w*0.12,h*0.1);
+      ctx.beginPath(); ctx.ellipse(w*0.42,h*0.31,w*0.1,h*0.03,0,0,Math.PI*2); ctx.fill();
+    },
+    naturaleza: () => {
+      ctx.fillStyle='#0d1a0d'; ctx.fillRect(0,0,w,h);
+      // Amanecer
+      const g=ctx.createLinearGradient(0,0,0,h);
+      g.addColorStop(0,'#ff8c00'); g.addColorStop(0.4,'#2d5a3d'); g.addColorStop(1,'#0d1a0d');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+      // Sol
+      ctx.fillStyle='rgba(255,200,50,0.9)'; ctx.beginPath(); ctx.arc(w*0.5,h*0.18,h*0.12,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,200,50,0.2)'; ctx.beginPath(); ctx.arc(w*0.5,h*0.18,h*0.22,0,Math.PI*2); ctx.fill();
+      // Rayos
+      ctx.strokeStyle='rgba(255,200,50,0.3)'; ctx.lineWidth=2;
+      for(let i=0;i<8;i++){
+        const a=i*Math.PI/4;
+        ctx.beginPath(); ctx.moveTo(w*0.5+Math.cos(a)*h*0.14,h*0.18+Math.sin(a)*h*0.14);
+        ctx.lineTo(w*0.5+Math.cos(a)*h*0.26,h*0.18+Math.sin(a)*h*0.26); ctx.stroke();
+      }
+      // Planta mágica
+      ctx.strokeStyle='#4caf78'; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.moveTo(w*0.5,h); ctx.bezierCurveTo(w*0.5,h*0.7,w*0.3,h*0.5,w*0.25,h*0.35); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(w*0.5,h*0.8); ctx.bezierCurveTo(w*0.65,h*0.65,w*0.75,h*0.55,w*0.77,h*0.42); ctx.stroke();
+      // Flores
+      [[w*0.25,h*0.32,'#ff69b4'],[w*0.77,h*0.39,'#ffd700'],[w*0.5,h*0.55,'#ff6b35']].forEach(([x,y,c])=>{
+        ctx.fillStyle=c; ctx.beginPath(); ctx.arc(x,y,h*0.05,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.arc(x,y,h*0.02,0,Math.PI*2); ctx.fill();
+      });
+    },
+    rio: () => {
+      ctx.fillStyle='#1a2a1a'; ctx.fillRect(0,0,w,h);
+      // Cielo
+      const g=ctx.createLinearGradient(0,0,0,h*0.5);
+      g.addColorStop(0,'#1a2a40'); g.addColorStop(1,'#2d4a2d');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h*0.5);
+      // Río Toachi
+      ctx.fillStyle='rgba(64,150,220,0.7)';
+      ctx.beginPath(); ctx.moveTo(0,h*0.55); ctx.bezierCurveTo(w*0.3,h*0.5,w*0.7,h*0.65,w,h*0.6); ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath(); ctx.fill();
+      // Puente colgante
+      ctx.strokeStyle='#8B4513'; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.moveTo(0,h*0.5); ctx.lineTo(w,h*0.5); ctx.stroke();
+      ctx.strokeStyle='rgba(139,69,19,0.5)'; ctx.lineWidth=2;
+      for(let i=0;i<8;i++){
+        const x=w*0.1+i*(w*0.12);
+        ctx.beginPath(); ctx.moveTo(x,h*0.5); ctx.lineTo(x,h*0.62); ctx.stroke();
+      }
+      // Cascada
+      ctx.fillStyle='rgba(150,200,255,0.4)';
+      ctx.beginPath(); ctx.rect(w*0.15,h*0.1,w*0.06,h*0.45); ctx.fill();
+      ctx.fillStyle='rgba(150,220,255,0.6)';
+      ctx.beginPath(); ctx.ellipse(w*0.18,h*0.55,w*0.06,h*0.03,0,0,Math.PI*2); ctx.fill();
+      // Montaña
+      ctx.fillStyle='#2d4a3e';
+      ctx.beginPath(); ctx.moveTo(0,h*0.5); ctx.lineTo(w*0.2,h*0.08); ctx.lineTo(w*0.4,h*0.5); ctx.closePath(); ctx.fill();
+    }
+  };
+  const fn = escenas[tipo] || escenas.bosque;
+  fn();
+}
+
+// ===== PREGUNTAS =====
+const TODAS_PREGUNTAS = [
+  {
+    cat: 'lugar', catClass: 'cat-lugar', catLabel: '🌿 Lugar',
+    ilustracion: 'bosque',
+    pregunta: '¿En qué región del Ecuador se desarrolla el cuento del Niño Misterioso?',
+    opciones: ['En las playas de Esmeraldas', 'En el bosque nublado de Cotopaxi', 'En el desierto de Loja', 'En las islas Galápagos'],
+    correcta: 1,
+    bien: '¡Correcto! 🌲 El cuento transcurre en las estribaciones andinas de Cotopaxi, en un bosque nublado lleno de misterios.',
+    mal: 'El cuento ocurre en el bosque nublado de Cotopaxi, en las estribaciones de los Andes ecuatorianos.',
+    pista: '💡 Piensa en una provincia de la Sierra ecuatoriana famosa por su volcán...'
+  },
+  {
+    cat: 'personaje', catClass: 'cat-personaje', catLabel: '👦 Personaje',
+    ilustracion: 'nino',
+    pregunta: '¿Qué prenda especial llevaba el niño misterioso cuando apareció en el bosque?',
+    opciones: ['Una capa roja', 'Un sombrero de paja', 'Unas botas de cuero', 'Una bufanda verde'],
+    correcta: 1,
+    bien: '¡Muy bien! 🎩 El sombrero de paja era la característica más especial del niño misterioso.',
+    mal: 'El niño llevaba un sombrero de paja, que era su rasgo más misterioso e identificable.',
+    pista: '💡 Es algo que se usa en la cabeza, muy típico en el campo ecuatoriano...'
+  },
+  {
+    cat: 'accion', catClass: 'cat-accion', catLabel: '⚡ Acción',
+    ilustracion: 'nino',
+    pregunta: '¿Cómo reaccionó el niño misterioso cuando la familia le hacía preguntas?',
+    opciones: ['Lloraba mucho', 'Solo sonreía mirando al río', 'Corría entre los árboles', 'Cantaba canciones'],
+    correcta: 1,
+    bien: '¡Excelente! 😊 El niño no hablaba pero siempre sonreía, mirando misteriosamente hacia el río Toachi.',
+    mal: 'El niño no hablaba. Solo sonreía y miraba hacia el río Toachi, guardando su misterio.',
+    pista: '💡 El niño no decía palabras, pero hacía algo con su cara al mirar hacia el agua...'
+  },
+  {
+    cat: 'personaje', catClass: 'cat-personaje', catLabel: '👨‍👩‍👧 Familia',
+    ilustracion: 'familia',
+    pregunta: '¿Quién de la familia quería ayudar al niño misterioso al principio?',
+    opciones: ['El padre', 'La madre', 'Los dos por igual', 'Ninguno quería ayudarlo'],
+    correcta: 1,
+    bien: '¡Correcto! 👩 La madre tenía el corazón generoso y quería ayudar al niño, mientras el padre dudaba.',
+    mal: 'Era la madre quien quería ayudar al niño. El padre era el que dudaba y desconfiaba.',
+    pista: '💡 En las familias, ¿quién suele ser la primera en mostrar hospitalidad con los extraños?'
+  },
+  {
+    cat: 'lugar', catClass: 'cat-lugar', catLabel: '🌊 Lugar',
+    ilustracion: 'rio',
+    pregunta: '¿Cuál es el río que aparece en el cuento y que el niño observaba?',
+    opciones: ['El río Napo', 'El río Guayas', 'El río Toachi', 'El río Pastaza'],
+    correcta: 2,
+    bien: '¡Excelente! 🌊 El río Toachi es un río real de Cotopaxi, famoso por sus cascadas de 102 metros.',
+    mal: 'El río mencionado es el Toachi, un río real de Cotopaxi conocido por su hermosa cascada.',
+    pista: '💡 Es un río de Cotopaxi conocido por una cascada visible desde un puente colgante...'
+  },
+  {
+    cat: 'accion', catClass: 'cat-accion', catLabel: '⚡ Acción',
+    ilustracion: 'bosque',
+    pregunta: '¿Qué hizo el niño misterioso al llegar el amanecer?',
+    opciones: ['Se quedó a vivir con la familia', 'Desapareció misteriosamente', 'Pidió comida y se fue', 'Habló con la familia'],
+    correcta: 1,
+    bien: '¡Muy bien! ✨ Al amanecer, el niño había desaparecido sin dejar rastro... solo un misterio.',
+    mal: 'Al amanecer el niño desapareció sin dejar rastro, como si nunca hubiera estado ahí.',
+    pista: '💡 Los personajes misteriosos de los cuentos suelen irse sin que nadie los vea...'
+  },
+  {
+    cat: 'naturaleza', catClass: 'cat-naturaleza', catLabel: '🌱 Naturaleza',
+    ilustracion: 'naturaleza',
+    pregunta: '¿Qué especial apareció en el lugar donde estuvo sentado el niño?',
+    opciones: ['Un tesoro de oro', 'Una planta medicinal desconocida', 'Una piedra brillante', 'Un nido de pájaros'],
+    correcta: 1,
+    bien: '¡Fantástico! 🌿 La planta medicinal que brotó era un mensaje del bosque para que cuiden la naturaleza.',
+    mal: 'Brotó una planta medicinal desconocida. Era el regalo del bosque a través del niño misterioso.',
+    pista: '💡 El bosque dejó algo vivo y natural que se usa para curar enfermedades...'
+  },
+  {
+    cat: 'moraleja', catClass: 'cat-moraleja', catLabel: '💫 Moraleja',
+    ilustracion: 'naturaleza',
+    pregunta: '¿Cuál es la enseñanza más importante del cuento del Niño Misterioso?',
+    opciones: [
+      'Nunca debemos hablar con extraños',
+      'Debemos respetar y cuidar la naturaleza',
+      'Es mejor quedarse siempre en casa',
+      'Los niños no deben salir solos'
+    ],
+    correcta: 1,
+    bien: '¡Perfecto! 🌳 El cuento nos enseña a respetar los bosques y la naturaleza, que tienen mensajes para nosotros.',
+    mal: 'La moraleja del cuento es respetar y cuidar la naturaleza, que nos habla a través de sus misterios.',
+    pista: '💡 La planta que brotó al final nos da una pista sobre lo que el bosque quiere que hagamos...'
+  },
+  {
+    cat: 'moraleja', catClass: 'cat-moraleja', catLabel: '💫 Valores',
+    ilustracion: 'familia',
+    pregunta: '¿Qué valor humano representa la actitud de la madre hacia el niño misterioso?',
+    opciones: ['La valentía', 'La hospitalidad y solidaridad', 'La obediencia', 'La inteligencia'],
+    correcta: 1,
+    bien: '¡Excelente! 🤝 La hospitalidad y solidaridad son valores fundamentales de las comunidades andinas.',
+    mal: 'La madre representó la hospitalidad y solidaridad, pilares de la cultura comunitaria ecuatoriana.',
+    pista: '💡 Piensa en lo que significa recibir bien a alguien que no conocemos en nuestra casa...'
+  },
+  {
+    cat: 'naturaleza', catClass: 'cat-naturaleza', catLabel: '🌲 Naturaleza',
+    ilustracion: 'bosque',
+    pregunta: '¿Qué tipo de ecosistema describe el cuento en Cotopaxi?',
+    opciones: ['Desierto árido', 'Bosque nublado andino', 'Selva amazónica', 'Manglar costero'],
+    correcta: 1,
+    bien: '¡Correcto! ☁️ El bosque nublado andino es uno de los ecosistemas más biodiversos y amenazados del Ecuador.',
+    mal: 'El cuento describe un bosque nublado andino, lleno de neblina, biodiversidad y misterios.',
+    pista: '💡 Es un bosque de la Sierra, siempre cubierto de nubes y niebla, en las laderas de los Andes...'
+  }
+];
+
+// ===== ESTADO =====
+let estado = {
+  preguntas: [],
+  actual: 0,
+  puntos: 0,
+  correctas: 0,
+  pistaUsada: false
+};
+
+function iniciarJuego(){
+  document.getElementById('pantalla-inicio').style.display='none';
+  document.getElementById('juego-activo').style.display='block';
+  estado.preguntas = shuffleArray([...TODAS_PREGUNTAS]).slice(0,10);
+  estado.actual = 0;
+  estado.puntos = 0;
+  estado.correctas = 0;
+  actualizarMarcador();
+  mostrarPregunta();
+}
+
+function mostrarPregunta(){
+  const p = estado.preguntas[estado.actual];
+  estado.pistaUsada = false;
+
+  document.getElementById('num-p').textContent = `Pregunta ${estado.actual+1} de 10`;
+  document.getElementById('cat-badge').className = `categoria-badge ${p.catClass}`;
+  document.getElementById('cat-badge').textContent = p.catLabel;
+  document.getElementById('texto-p').textContent = p.pregunta;
+  document.getElementById('pista-p').textContent = p.pista;
+  document.getElementById('pista-p').classList.remove('visible');
+  document.getElementById('btn-pista').style.display = 'inline-block';
+  document.getElementById('btn-siguiente').style.display = 'none';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('progreso-fill').style.width = (estado.actual/10*100)+'%';
+
+  // Ilustración
+  const c = document.getElementById('canvas-pregunta');
+  dibujarEscena(c.getContext('2d'), p.ilustracion);
+
+  // Opciones
+  const cont = document.getElementById('opciones');
+  cont.innerHTML = '';
+  const letras = ['A','B','C','D'];
+  p.opciones.forEach((op, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opcion-btn';
+    btn.innerHTML = `<span class="letra">${letras[i]}</span>${op}`;
+    btn.onclick = () => responder(i, btn);
+    cont.appendChild(btn);
+  });
+}
+
+function responder(idx, btn){
+  const p = estado.preguntas[estado.actual];
+  const todos = document.querySelectorAll('.opcion-btn');
+  todos.forEach(b => b.disabled = true);
+
+  const esCorrecta = idx === p.correcta;
+  btn.classList.add(esCorrecta ? 'correcta' : 'incorrecta');
+  if(!esCorrecta){
+    todos[p.correcta].classList.add('correcta');
+  }
+
+  let pts = 0;
+  if(esCorrecta){
+    pts = estado.pistaUsada ? 5 : 10;
+    estado.puntos += pts;
+    estado.correctas++;
+  }
+
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (esCorrecta ? 'bien' : 'mal');
+  fb.innerHTML = `<h4>${esCorrecta ? '✅ ¡Correcto!' + (estado.pistaUsada ? ' (+5 pts)' : ' (+10 pts)') : '❌ Incorrecto'}</h4>
+    <p>${esCorrecta ? p.bien : p.mal}</p>`;
+
+  actualizarMarcador();
+  document.getElementById('btn-pista').style.display = 'none';
+  document.getElementById('btn-siguiente').style.display = 'inline-block';
+}
+
+function mostrarPista(){
+  if(estado.pistaUsada) return;
+  estado.pistaUsada = true;
+  document.getElementById('pista-p').classList.add('visible');
+  document.getElementById('btn-pista').style.display = 'none';
+}
+
+function siguientePregunta(){
+  estado.actual++;
+  if(estado.actual >= 10){
+    mostrarFinal();
+  } else {
+    mostrarPregunta();
+  }
+}
+
+function mostrarFinal(){
+  document.getElementById('juego-activo').style.display='none';
+  const f = document.getElementById('pantalla-final');
+  f.classList.add('show');
+
+  const pct = Math.round(estado.correctas/10*100);
+  let estrellas = '⭐';
+  let titulo = '¡Buen intento!';
+  let mensaje = 'Sigue leyendo el cuento y vuelve a intentarlo.';
+  if(pct >= 90){ estrellas='⭐⭐⭐'; titulo='¡Eres un experto!'; mensaje='¡Dominaste completamente la historia del Niño Misterioso!'; }
+  else if(pct >= 70){ estrellas='⭐⭐'; titulo='¡Muy bien!'; mensaje='Conoces muy bien el cuento. ¡Un poco más y serás experto!'; }
+  else if(pct >= 50){ estrellas='⭐'; titulo='¡Buen intento!'; mensaje='Aprendiste bastante. Lee de nuevo el cuento y mejorarás.'; }
+  else { estrellas='🌱'; titulo='¡Sigue aprendiendo!'; mensaje='El cuento tiene muchos secretos. ¡Lee de nuevo y vuelve!'; }
+
+  document.getElementById('estrellas-final').textContent = estrellas;
+  document.getElementById('titulo-final').textContent = titulo;
+  document.getElementById('puntos-final').textContent = estado.puntos + ' pts';
+  document.getElementById('sub-resultado').textContent = `${estado.correctas} de 10 correctas`;
+  document.getElementById('mensaje-final').textContent = mensaje;
+
+  setTimeout(()=>{
+    document.getElementById('barra-precision').style.width = pct+'%';
+    document.getElementById('pct-precision').textContent = pct+'%';
+  }, 300);
+
+  document.getElementById('lista-aprendizajes').innerHTML = [
+    '🌿 El cuento ocurre en el bosque nublado de Cotopaxi, Ecuador.',
+    '👦 El niño misterioso llevaba un sombrero de paja y no hablaba.',
+    '🌊 El río Toachi es real y tiene una cascada de 102 metros.',
+    '🌱 La planta medicinal es un mensaje de respeto a la naturaleza.',
+    '🤝 La hospitalidad es un valor fundamental de las comunidades andinas.'
+  ].map(a=>`<li>• ${a}</li>`).join('');
+}
+
+function reiniciarJuego(){
+  document.getElementById('pantalla-final').classList.remove('show');
+  iniciarJuego();
+}
+
+function volverMenu(){
+  document.getElementById('pantalla-inicio').style.display='block';
+  document.getElementById('juego-activo').style.display='none';
+  document.getElementById('pantalla-final').classList.remove('show');
+}
+
+function actualizarMarcador(){
+  document.getElementById('puntos').textContent = estado.puntos;
+  document.getElementById('num-pregunta').textContent = estado.actual+1;
+  document.getElementById('correctas').textContent = estado.correctas;
+}
+
+function shuffleArray(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// Portada
+window.onload = () => {
+  const c = document.getElementById('canvas-portada');
+  if(c) dibujarEscena(c.getContext('2d'), 'bosque');
+};
+</script>
+</body>
+</html>
